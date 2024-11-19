@@ -396,3 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Ignore all .zip files
+*.zip
+
+# Ignore all .vscode directories and their contents
+.vscode/
