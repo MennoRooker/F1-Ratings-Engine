@@ -402,3 +402,6 @@ FodyWeavers.xsd
 
 # Ignore all .vscode directories and their contents
 .vscode/
+
+# Ignore log
+log.txt
