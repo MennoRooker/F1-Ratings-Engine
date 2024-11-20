@@ -19,20 +19,29 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 def main():
-    f = open("drivers.csv")
+    f = open("data/drivers.csv")
     reader = csv.reader(f)
 
     # Skip the first line
     next(reader)
 
     # Parse the csv data
-    for id, number, code, forename, surname, dob, nationality in reader:
-        driver = Driver(id=id, name=f"{forename} {surname}", number=number, code=code, dob=dob, nationality=nationality)
+    for row in reader:
+        driver = Driver(
+            id=int(row[0]), 
+            name=f"{row[4]} {row[5]}", 
+            number=int(row[2]) if row[2] != "\\N" else None, 
+            code=row[3], 
+            dob=row[6], 
+            nationality=row[7]
+        )
         db.session.add(driver)
 
         # Commit the changes to the database
         db.session.commit()
         print(f"Added {driver.name} to 'drivers'")
+
+
 
 # Run script to add the data
 if __name__ == "__main__":

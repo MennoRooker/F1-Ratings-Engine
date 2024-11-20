@@ -3,7 +3,6 @@ Model classes for 'F1-ELO-Engine-2.0' repository
 """
 
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -18,8 +17,9 @@ class Driver(db.Model):
     dob = db.Column(db.String, nullable=False)
     nationality = db.Column(db.String, nullable=False)
 
-    def __init__(self, rating):
-        self.rating = rating
+    def __init__(self, rating=0, **kwargs):
+        super().__init__(**kwargs)  # Pass any SQLAlchemy column arguments to the parent class
+        self.rating = rating 
 
     def calc_rating(self, variables):
         self.rating = variables * self.rating
