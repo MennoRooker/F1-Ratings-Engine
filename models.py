@@ -12,7 +12,7 @@ class Driver(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
-    code = db.Column(db.String, nullable=False)
+    code = db.Column(db.String, nullable=True)
     number = db.Column(db.Integer, nullable=True)
     dob = db.Column(db.String, nullable=False)
     nationality = db.Column(db.String, nullable=False)
@@ -28,16 +28,29 @@ class Driver(db.Model):
     # Relationship to results
     results = db.relationship("Result", back_populates="driver")
 
+class Circuit(db.Model):
+    __tablename__ = "circuits"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    location = db.Column(db.String, nullable=False)
+    country = db.Column(db.String, nullable=False)
+
+    # Relationship to races
+    races = db.relationship("Race", back_populates="circuit")
+
 
 class Race(db.Model):
     __tablename__ = "races"
 
     id = db.Column(db.Integer, primary_key=True)
-    circuit = db.Column(db.String, nullable=False)
+    name = db.Column(db.String, nullable=False)
+    circuit_id = db.Column(db.Integer, db.ForeignKey("circuits.id"), nullable=False)
     year = db.Column(db.Integer, nullable=False)
-    sprint = db.Column(db.Boolean, nullable=False) # Indicates a sprint race
+    sprint = db.Column(db.Boolean, nullable=False) # Indicates a sprint race occurance
 
-    # Relationship to results
+    # Relationships
+    circuit = db.relationship("Circuit", back_populates="races")
     results = db.relationship("Result", back_populates="race")
 
 
@@ -47,10 +60,9 @@ class Result(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     race_id = db.Column(db.Integer, db.ForeignKey("races.id"), nullable=False)
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
-    position = db.Column(db.Integer, nullable=False)
+    position = db.Column(db.Integer, nullable=True)
     points = db.Column(db.Integer, nullable=False)
 
     # Relationships
     race = db.relationship("Race", back_populates="results")
     driver = db.relationship("Driver", back_populates="results")
-
