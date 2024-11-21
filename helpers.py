@@ -12,3 +12,5 @@ def read_csv_data(path):
 
     # Skip the first line
     next(reader)
+
+    return reader

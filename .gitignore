@@ -405,3 +405,6 @@ FodyWeavers.xsd
 
 # Ignore log
 log.txt
+
+# Ignore test files
+test_*.py

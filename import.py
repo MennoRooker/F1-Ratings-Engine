@@ -7,6 +7,7 @@ import os
 
 from flask import Flask
 from models import *
+from helpers import read_csv_data
 
 # Check for environment variable
 if not os.getenv("DATABASE_URL"):
@@ -20,14 +21,10 @@ db.init_app(app)
 
 
 def add_drivers_data():
-    f = open("data/drivers.csv")
-    reader = csv.reader(f)
-
-    # Skip the first line
-    next(reader)
+    drivers_data = read_csv_data("data/drivers.csv")
 
     # Parse the csv data
-    for row in reader:
+    for row in drivers_data:
         driver = Driver(
             id=int(row[0]), 
             name=f"{row[4]} {row[5]}",
@@ -45,14 +42,10 @@ def add_drivers_data():
 
 
 def add_circuits_data():
-    f = open("data/circuits.csv")
-    reader = csv.reader(f)
-
-    # Skip the first line
-    next(reader)
+    circuits_data = read_csv_data("data/circuits.csv")
 
     # Parse the csv data
-    for row in reader:
+    for row in circuits_data:
         circuit = Circuit(
             id=int(row[0]),
             name=row[2],
@@ -68,14 +61,10 @@ def add_circuits_data():
 
 
 def add_races_data():
-    f = open("data/races.csv")
-    reader = csv.reader(f)
-
-    # Skip the first line
-    next(reader)
+    races_data = read_csv_data("data/races.csv")
 
     # Parse the csv data
-    for row in reader:
+    for row in races_data:
         race = Race(
             id=int(row[0]),
             name=row[4],
@@ -90,21 +79,18 @@ def add_races_data():
     # Commit the changes to the database
     db.session.commit()
 
-def add_results_data():
-    f = open("data/results.csv")
-    reader = csv.reader(f)
 
-    # Skip the first line
-    next(reader)
+def add_results_data():
+    results_data = read_csv_data("data/results.csv")
 
     # Parse the csv data
-    for row in reader:
+    for row in results_data:
         result = Result(
             id=int(row[0]), 
             race_id=int(row[1]),
             driver_id=int(row[2]),
             position=int(row[6]) if row[6] != "\\N" else None,
-            points=int(row[8])
+            points=float(row[9])
 
         )
         db.session.add(result)
@@ -113,6 +99,7 @@ def add_results_data():
         
     # Commit the changes to the database
     db.session.commit()
+
 
 # Run script to add the data
 if __name__ == "__main__":
