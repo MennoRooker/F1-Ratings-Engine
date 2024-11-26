@@ -2,7 +2,6 @@
 Imports data from .csv files into the corresponding tables
 """
 
-import csv
 import os
 
 from flask import Flask
@@ -101,6 +100,26 @@ def add_results_data():
     db.session.commit()
 
 
+def add_constructors_data():
+    Constructors_data = read_csv_data("data/constructors.csv")
+
+    # Parse the csv data
+    for row in Constructors_data:
+        constructor = Constructor(
+            id=int(row[0]), 
+            name=row[2],
+            ref=row[1]
+
+        )
+        db.session.add(constructor)
+
+        print(f"Added {constructor.name} to 'constructors'")
+        
+    # Commit the changes to the database
+    db.session.commit()
+
+
+
 # Run script to add the data
 if __name__ == "__main__":
     with app.app_context():
@@ -108,3 +127,4 @@ if __name__ == "__main__":
         add_circuits_data()
         add_races_data()
         add_results_data()
+        add_constructors_data()

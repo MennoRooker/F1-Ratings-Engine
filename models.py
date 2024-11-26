@@ -16,10 +16,12 @@ class Driver(db.Model):
     number = db.Column(db.Integer, nullable=True)
     dob = db.Column(db.String, nullable=False)
     nationality = db.Column(db.String, nullable=False)
+    constructor_id = db.Column(db.Integer, db.ForeignKey("constructors.id"), nullable=True)
 
     def __init__(self, rating=0, **kwargs):
         super().__init__(**kwargs)  # Pass any SQLAlchemy column arguments to the parent class
-        self.rating = rating 
+        self.rating = rating
+       
 
     def calc_rating(self, variables):
         self.rating = variables * self.rating
@@ -27,6 +29,9 @@ class Driver(db.Model):
     
     # Relationship to results
     results = db.relationship("Result", back_populates="driver")
+    constructor = db.relationship("Constructor", back_populates="drivers")  # Link to the constructor
+
+
 
 class Circuit(db.Model):
     __tablename__ = "circuits"
@@ -60,9 +65,23 @@ class Result(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     race_id = db.Column(db.Integer, db.ForeignKey("races.id"), nullable=False)
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
+    constructor_id = db.Column(db.Integer, db.ForeignKey("constructors.id"), nullable=True)
     position = db.Column(db.Integer, nullable=True)
     points = db.Column(db.Integer, nullable=False)
 
     # Relationships
     race = db.relationship("Race", back_populates="results")
     driver = db.relationship("Driver", back_populates="results")
+    constructor = db.relationship("Constructor", back_populates="results") 
+
+
+class Constructor(db.Model):
+    __tablename__ = "constructors"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    ref = db.Column(db.String, nullable=False)
+
+    # Relationships
+    drivers = db.relationship("Driver", back_populates="constructor")  
+    results = db.relationship("Result", back_populates="constructor")  
