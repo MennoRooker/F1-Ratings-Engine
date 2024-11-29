@@ -27,10 +27,9 @@ class Driver(db.Model):
         self.rating = variables * self.rating
         return self.rating
     
-    # Relationship to results
+    # Relationships
     results = db.relationship("Result", back_populates="driver")
     constructor = db.relationship("Constructor", back_populates="drivers")  # Link to the constructor
-
 
 
 class Circuit(db.Model):
@@ -59,6 +58,18 @@ class Race(db.Model):
     results = db.relationship("Result", back_populates="race")
 
 
+class Constructor(db.Model):
+    __tablename__ = "constructors"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    ref = db.Column(db.String, nullable=False)
+
+    # Relationships
+    drivers = db.relationship("Driver", back_populates="constructor")  
+    results = db.relationship("Result", back_populates="constructor")  
+
+
 class Result(db.Model):
     __tablename__ = "results"
 
@@ -75,13 +86,3 @@ class Result(db.Model):
     constructor = db.relationship("Constructor", back_populates="results") 
 
 
-class Constructor(db.Model):
-    __tablename__ = "constructors"
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    ref = db.Column(db.String, nullable=False)
-
-    # Relationships
-    drivers = db.relationship("Driver", back_populates="constructor")  
-    results = db.relationship("Result", back_populates="constructor")  

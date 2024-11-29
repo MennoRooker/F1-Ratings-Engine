@@ -79,27 +79,6 @@ def add_races_data():
     db.session.commit()
 
 
-def add_results_data():
-    results_data = read_csv_data("data/results.csv")
-
-    # Parse the csv data
-    for row in results_data:
-        result = Result(
-            id=int(row[0]), 
-            race_id=int(row[1]),
-            driver_id=int(row[2]),
-            position=int(row[6]) if row[6] != "\\N" else None,
-            points=float(row[9])
-
-        )
-        db.session.add(result)
-
-        print(f"Added {result.points} to {result.driver_id} in 'results'")
-        
-    # Commit the changes to the database
-    db.session.commit()
-
-
 def add_constructors_data():
     Constructors_data = read_csv_data("data/constructors.csv")
 
@@ -109,7 +88,6 @@ def add_constructors_data():
             id=int(row[0]), 
             name=row[2],
             ref=row[1]
-
         )
         db.session.add(constructor)
 
@@ -119,6 +97,26 @@ def add_constructors_data():
     db.session.commit()
 
 
+def add_results_data():
+    results_data = read_csv_data("data/results.csv")
+
+    # Parse the csv data
+    for row in results_data:
+        result = Result(
+            id=int(row[0]), 
+            race_id=int(row[1]),
+            driver_id=int(row[2]),
+            constructor_id=int(row[3]),
+            position=int(row[6]) if row[6] != "\\N" else None,
+            points=float(row[9])
+        )
+        db.session.add(result)
+
+        print(f"Added {result.points} to {result.driver_id} for {result.constructor_id} in 'results'")
+        
+    # Commit the changes to the database
+    db.session.commit()
+
 
 # Run script to add the data
 if __name__ == "__main__":
@@ -126,5 +124,5 @@ if __name__ == "__main__":
         add_drivers_data()
         add_circuits_data()
         add_races_data()
-        add_results_data()
         add_constructors_data()
+        add_results_data()

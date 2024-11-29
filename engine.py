@@ -1,12 +1,11 @@
 """
-Main ratings engine for 'F1-ELO-Engine-2.0' repository
+Main ratings engine for determining drivers' ratings
 """
 
 import os
 
 from flask import Flask
 from sqlalchemy.sql import func
-
 
 from models import *
 
@@ -20,8 +19,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
+
 def get_constructor_standings(race_id, season=2020):
-    # Sum points for each constructor up to the given race
     standings = (
         db.session.query(
             Constructor.id.label("constructor_id"),
@@ -35,12 +34,18 @@ def get_constructor_standings(race_id, season=2020):
         .order_by(func.sum(Result.points).desc())
         .all()
     )
+    print(f"Standings after Race {race_id}:")
+    for standing in standings:
+        print(f"Constructor: {standing.constructor_name}, Points: {standing.total_points}")
     return standings
 
 def assign_penalties(standings):
     penalties = {}
+    print("\nPenalties Based on Standings:")
     for rank, standing in enumerate(standings, start=1):
-        penalties[standing.constructor_id] = max(10 - rank+1, 0)
+        penalty = max(10 - rank + 1, 0)  # Top 10 constructors only
+        penalties[standing.constructor_id] = penalty
+        print(f"{standing.constructor_name}: -{penalty} points")
     return penalties
 
 def adjust_driver_points_for_race(race_id, penalties):
@@ -51,16 +56,32 @@ def adjust_driver_points_for_race(race_id, penalties):
         .all()
     )
 
+    print(f"\nAdjusting points for Race {race_id}:")
     for result in results:
-        constructor_id = result.driver.constructor_id
+
+        # Checking where I get an object of 'NoneType'
+        print(f"Result ID: {result.id}")
+        print(f"Driver: {result.driver}")
+        if result.driver:
+            print(f"Driver Name: {result.driver.name}")
+            print(f"Constructor: {result.constructor.name}")
+            if result.constructor:
+                print(f"Constructor Name: {result.constructor.name}")
+
+        # Continuing with the actual logic
+        constructor_id = result.constructor_id
         penalty = penalties.get(constructor_id, 0)
-        result.points -= penalty
+        adjusted_points = result.points - penalty
+        print(
+            f"Driver: {result.driver.name}, Constructor: {result.constructor.name}, "
+            f"Original Points: {result.points}, Penalty: -{penalty}, Adjusted Points: {adjusted_points}"
+        )
+        result.points = adjusted_points
         db.session.add(result)
 
     db.session.commit()
 
-def process_season(season=2020):
-    # Get all races in the season
+def process_season(season):
     races = (
         db.session.query(Race)
         .filter_by(year=season)
@@ -70,16 +91,17 @@ def process_season(season=2020):
 
     for i, race in enumerate(races):
         if i == 0:
-            continue  # Skip the first race
+            print(f"Skipping Race {race.id} (No constructor standings yet)")
+            continue
 
-        # Get standings after the previous race
+        print(f"\nProcessing Race {race.id} - {race.name}")
         standings = get_constructor_standings(race.id - 1, season)
         penalties = assign_penalties(standings)
-
-        # Adjust points for the current race
         adjust_driver_points_for_race(race.id, penalties)
+
+    print("\nSeason processing complete!")
 
 # Run script to add the data
 if __name__ == "__main__":
     with app.app_context():
-        get_constructor_standings(1031)
+        process_season(season=2020)
