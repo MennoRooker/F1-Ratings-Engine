@@ -1,4 +1,4 @@
-Formula 1 ELO Engine 2.0
+Formula 1 Ratings Engine
 by Menno Rooker, Nov 2024
 based on Formula 1 ELO Engine by Mr. V
 
