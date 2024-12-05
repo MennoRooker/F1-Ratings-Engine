@@ -16,11 +16,12 @@ Leaderboards
             </tr>
         </thead>
         <tbody>
-            {% for driver, points in standings %}
+            {% for driver, total_points, zero_sum_rating in standings %}
             <tr>
                 <td>{{ loop.index }}</td> <!-- Jinja's loop.index starts at 1 -->
                 <td>{{ driver }}</td>
-                <td>{{ points }}</td>
+                <td>{{ total_points }}</td>
+                <td>{{ zero_sum }}</td>
             </tr>
             {% endfor %}
         </tbody>

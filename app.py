@@ -1,5 +1,5 @@
 """
-Main ratings engine for determining drivers' ratings
+Flask application for F1
 """
 
 import os
@@ -28,14 +28,23 @@ Session(app)
 # ======================================== LEADERBOARD ======================================== #
 @app.route("/")
 def leaderboard():
-    driver_points_2020 = (
-        db.session.query(Driver.name, func.sum(Result.points).label("total_points"))
-        .join(Result, Driver.id == Result.driver_id)
-        .join(Race, Result.race_id == Race.id)
+    # Query for the driver standings based on the ratings table
+    driver_ratings_2020 = (
+        db.session.query(
+            Driver.name,
+            func.sum(Rating.adjusted_points).label("total_points"),
+            func.sum(Rating.zero_sum_rating).label("zero_sum_rating")
+        )
+        .join(Rating, Driver.id == Rating.driver_id)
+        .join(Race, Rating.race_id == Race.id)
         .filter(Race.year == 2020)
         .group_by(Driver.id)
-        .order_by(func.sum(Result.points).desc())  # Order by total points, descending
+        .order_by(func.sum(Rating.adjusted_points).desc())  # Order by adjusted points
         .all()
     )
 
-    return render_template("leaderboard.html", standings=driver_points_2020)
+    # Render the leaderboard page with the query results
+    return render_template("leaderboard.html", standings=driver_ratings_2020)
+
+
+

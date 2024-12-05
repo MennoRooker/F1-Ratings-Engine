@@ -1,5 +1,5 @@
 """
-Model classes for 'F1-ELO-Engine-2.0' repository
+Model classes for 'F1-Ratings-Engine' repository
 """
 
 from flask_sqlalchemy import SQLAlchemy
@@ -18,18 +18,10 @@ class Driver(db.Model):
     nationality = db.Column(db.String, nullable=False)
     constructor_id = db.Column(db.Integer, db.ForeignKey("constructors.id"), nullable=True)
 
-    def __init__(self, rating=0, **kwargs):
-        super().__init__(**kwargs)  # Pass any SQLAlchemy column arguments to the parent class
-        self.rating = rating
-       
-
-    def calc_rating(self, variables):
-        self.rating = variables * self.rating
-        return self.rating
-    
     # Relationships
     results = db.relationship("Result", back_populates="driver")
-    constructor = db.relationship("Constructor", back_populates="drivers")  # Link to the constructor
+    constructor = db.relationship("Constructor", back_populates="drivers")  # Link to the constructors table
+    ratings = db.relationship("Rating", back_populates="driver")  # Link to the ratings table
 
 
 class Circuit(db.Model):
@@ -56,6 +48,7 @@ class Race(db.Model):
     # Relationships
     circuit = db.relationship("Circuit", back_populates="races")
     results = db.relationship("Result", back_populates="race")
+    ratings = db.relationship("Rating", back_populates="race")
 
 
 class Constructor(db.Model):
@@ -67,7 +60,8 @@ class Constructor(db.Model):
 
     # Relationships
     drivers = db.relationship("Driver", back_populates="constructor")  
-    results = db.relationship("Result", back_populates="constructor")  
+    results = db.relationship("Result", back_populates="constructor")
+    ratings = db.relationship("Rating", back_populates="constructor") 
 
 
 class Result(db.Model):
@@ -84,5 +78,27 @@ class Result(db.Model):
     race = db.relationship("Race", back_populates="results")
     driver = db.relationship("Driver", back_populates="results")
     constructor = db.relationship("Constructor", back_populates="results") 
+
+
+class Rating(db.Model):
+    __tablename__ = "ratings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    driver_id = db.Column(db.Integer, db.ForeignKey("drivers.id"), nullable=False)
+    constructor_id = db.Column(db.Integer, db.ForeignKey("constructors.id"), nullable=False)
+    race_id = db.Column(db.Integer, db.ForeignKey("races.id"), nullable=False)
+    year = db.Column(db.Integer, nullable=False) 
+    adjusted_points = db.Column(db.Float, nullable=False)  # Corrected points after penalties
+    zero_sum_rating = db.Column(db.Integer, nullable=False)  # Adds a zero-sum option for ranking
+
+    # Relationships
+    driver = db.relationship("Driver", back_populates="ratings")
+    constructor = db.relationship("Constructor", back_populates="ratings")
+    race = db.relationship("Race", back_populates="ratings")
+
+# Add relationships to the relevant models
+Driver.ratings = db.relationship("Rating", back_populates="driver", cascade="all, delete-orphan")
+Constructor.ratings = db.relationship("Rating", back_populates="constructor", cascade="all, delete-orphan")
+Race.ratings = db.relationship("Rating", back_populates="race", cascade="all, delete-orphan")
 
 
