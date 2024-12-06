@@ -16,6 +16,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
+
 def get_constructor_standings(race_id, season=2020):
     """Retrieve constructor standings up to a specific race."""
     standings = (
@@ -36,6 +37,7 @@ def get_constructor_standings(race_id, season=2020):
         print(f"Constructor: {standing.constructor_name}, Points: {standing.total_points}")
     return standings
 
+
 def assign_penalties(standings):
     """Assign penalties based on the constructor standings."""
     penalties = {}
@@ -43,6 +45,7 @@ def assign_penalties(standings):
         penalty = 10 - rank + 1
         penalties[standing.constructor_id] = penalty
     return penalties
+
 
 def populate_ratings_for_race(race, penalties, season):
     """Populate the ratings table for a specific race, applying penalties."""
@@ -136,4 +139,5 @@ def process_season(season):
 # Run script to populate the ratings table
 if __name__ == "__main__":
     with app.app_context():
-        process_season(season=2020)
+        for year in range(1994,2025):
+            process_season(season=year)

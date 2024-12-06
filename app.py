@@ -25,11 +25,25 @@ app.config["SESSION_TYPE"] = "filesystem"
 
 Session(app)
 
-# ======================================== LEADERBOARD ======================================== #
+# ============================================= HOME PAGE ============================================= #
 @app.route("/")
-def leaderboard():
+def homepage():
+    seasons = (
+        db.session.query(Race.year)
+        .distinct()
+        .order_by(Race.year.desc())
+        .all()
+    )
+    seasons = [year[0] for year in seasons]
+
+    return render_template("homepage.html", seasons=seasons)
+
+
+# ============================================ LEADERBOARD ============================================ #
+@app.route("/<int:year>")
+def leaderboard(year):
     # Query for the driver standings based on the ratings table
-    driver_ratings_2020 = (
+    driver_ratings = (
         db.session.query(
             Driver.name,
             func.sum(Rating.adjusted_points).label("total_points"),
@@ -37,14 +51,14 @@ def leaderboard():
         )
         .join(Rating, Driver.id == Rating.driver_id)
         .join(Race, Rating.race_id == Race.id)
-        .filter(Race.year == 2020)
+        .filter(Race.year == year)
         .group_by(Driver.id)
         .order_by(func.sum(Rating.adjusted_points).desc())  # Order by adjusted points
         .all()
     )
 
     # Render the leaderboard page with the query results
-    return render_template("leaderboard.html", standings=driver_ratings_2020)
+    return render_template("leaderboard.html", standings=driver_ratings, year=year)
 
 
 

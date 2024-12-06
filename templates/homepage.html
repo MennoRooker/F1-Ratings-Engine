@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>F1 Leaderboards</title>
+</head>
+<body>
+    <header>
+        <h1>Welcome to the F1 Leaderboards!</h1>
+        <p>Explore driver and constructor standings across seasons and all-time rankings.</p>
+        <nav>
+            <a href="/all-time">All-Time Leaderboard</a>
+            <a href="/2023">Latest Season: 2023</a>
+            <a href="#seasons">Explore Seasons</a>
+        </nav>
+    </header>
+
+    <section id="highlights">
+        <h2>Highlights</h2>
+        <p><strong>World Champion 2024:</strong> Max Verstappen</p>
+        <p><strong>Leading Constructor:</strong> Red Bull Racing</p>
+    </section>
+
+    <section id="season-dropdown">
+        <h2>Select a Season</h2>
+        <form method="get" action="">
+            <label for="season">Choose a season:</label>
+            <select name="season" id="season" onchange="location = this.value;">
+                <option value="" disabled selected>Select a season</option>
+                {% for season in seasons %}
+                <option value="/{{ season }}">{{ season }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </section>
+</body>
+</html>
