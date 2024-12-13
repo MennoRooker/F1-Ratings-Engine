@@ -17,8 +17,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 
-def get_constructor_standings(race_id, season=2020):
-    """Retrieve constructor standings up to a specific race."""
+# ============================================ CONSTRUCTORS ============================================ #
+def get_constructor_standings(race_id, season):
+    """Retrieve constructor standings up to a specific race in a season."""
+
     standings = (
         db.session.query(
             Constructor.id.label("constructor_id"),
@@ -32,23 +34,31 @@ def get_constructor_standings(race_id, season=2020):
         .order_by(func.sum(Result.points).desc())
         .all()
     )
+
     print(f"Standings after Race {race_id}:")
     for standing in standings:
         print(f"Constructor: {standing.constructor_name}, Points: {standing.total_points}")
+
     return standings
 
 
+# ============================================= PENALTIES ============================================= #
 def assign_penalties(standings):
     """Assign penalties based on the constructor standings."""
-    penalties = {}
+
+    penalties = {}  # Define an empty dictionary for assigning penalties
+
     for rank, standing in enumerate(standings, start=1):
         penalty = 10 - rank + 1
         penalties[standing.constructor_id] = penalty
+
     return penalties
 
 
-def populate_ratings_for_race(race, penalties, season):
+# ============================================== RATINGS ============================================== #
+def populate_ratings(race, penalties, season, is_first_race):
     """Populate the ratings table for a specific race, applying penalties."""
+
     results = (
         db.session.query(Result)
         .filter(Result.race_id == race.id)
@@ -59,11 +69,13 @@ def populate_ratings_for_race(race, penalties, season):
         driver_id = result.driver_id
         constructor_id = result.constructor_id
 
+        if is_first_race:
+            adjusted_points = result.points
         # Calculate adjusted points
         penalty = penalties.get(constructor_id, 0)
         adjusted_points = result.points - penalty
 
-        # Calculate zero-sum rating
+        # Set zero-sum rating to 0
         zero_sum_rating = 0
 
         # Create a new rating entry
@@ -80,39 +92,40 @@ def populate_ratings_for_race(race, penalties, season):
     db.session.commit()
 
 
-def add_points_first_race(race, season):
-    """Add the points for the first race without penalties."""
-    # Query the results for the first race
-    results = (
-        db.session.query(Result)
-        .filter(Result.race_id == race.id)
-        .all()
-    )
-
-    for result in results:
-        driver_id = result.driver_id
-        constructor_id = result.constructor_id
-
-        # Points are not adjusted for the first race (penalty = 0)
-        adjusted_points = result.points
-        zero_sum_rating = 0
-
-        # Create a new rating entry for the first race
-        rating = Rating(
-            driver_id=driver_id,
-            constructor_id=constructor_id,
-            race_id=race.id,
-            year=season,
-            adjusted_points=adjusted_points,
-            zero_sum_rating=zero_sum_rating
-        )
-        db.session.add(rating)
-
-    db.session.commit()
-
-
+# ============================================== SEASONS ============================================== #
 def process_season(season):
-    """Process the season and populate the ratings table with adjusted points."""
+    """Process the season and populate the ratings table with adjusted points.
+    All pre-2010 seasons will adopt the post-2010 scoring system for consistency reasons."""
+
+    # Introduce post-2010 scoring system to apply to all pre-2010 seasons
+    if season < 2010:
+        scoring_system = {
+            1: 25,
+            2: 18,
+            3: 15,
+            4: 12,
+            5: 10,
+            6: 8,
+            7: 6,
+            8: 4,
+            9: 2,
+            10: 1
+        }
+
+        # Get all results for all races
+        results = db.session.query(Result).all()
+        
+        # Change results to match post-2010 scoring system
+        for result in results:
+            if result.position is None:
+                result.points = 0
+            else:
+                result.points = scoring_system.get(result.position, 0)  # Default to 0 for positions > 10
+
+        # Commit changes to the database
+        db.session.commit()
+        print("Points updated to post-2010 scoring system.")
+   
     races = (
         db.session.query(Race)
         .filter_by(year=season)
@@ -129,15 +142,15 @@ def process_season(season):
         penalties = assign_penalties(standings)
 
         if i == 0:
-            add_points_first_race(race, season)  # Still add the points from the first race
-            continue
+            populate_ratings(race, penalties, season, is_first_race=True)  # Add the regular points for the first race
+        else:
+            populate_ratings(race, penalties, season, is_first_race=False)  
 
-        populate_ratings_for_race(race, penalties, season)
+    print(f"\n{season} season processing complete!")
 
-    print("\nSeason processing complete!")
 
-# Run script to populate the ratings table
+# =============================================== MAIN =============================================== #
 if __name__ == "__main__":
     with app.app_context():
-        for year in range(1994,2025):
+        for year in range(1950,2024):
             process_season(season=year)

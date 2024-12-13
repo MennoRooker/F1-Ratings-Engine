@@ -5,8 +5,14 @@ Leaderboards
 {% endblock %}
 
 {% block main %}
+<!-- Load plotly.js into the DOM -->
+<script src='https://cdn.plot.ly/plotly-2.35.2.min.js'></script>
+
+<script src="static/ratings-plot.js" type="module"></script>
+
 <div class="container">
     <h1 class="my-4"> {{ year }} Driver Standings</h1>
+
     <table class="table table-striped table-bordered">
         <thead class="table-dark">
             <tr>
@@ -26,6 +32,12 @@ Leaderboards
             {% endfor %}
         </tbody>
     </table>
+
+    <div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
+
+    <!-- Pass the plot data to a data-* attribute -->
+    <div id="plotDataDiv" data-plot-data='{{ plot_data | tojson | safe }}'></div>
+    
 </div>
 {% endblock %}
 
