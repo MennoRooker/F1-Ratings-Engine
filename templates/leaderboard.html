@@ -19,6 +19,7 @@ Leaderboards
                 <th>Rank</th>
                 <th>Driver</th>
                 <th>Rating</th>
+                <th>Zero-Sum Rating</th>
             </tr>
         </thead>
         <tbody>
@@ -33,7 +34,7 @@ Leaderboards
         </tbody>
     </table>
 
-    <div id='myDiv'><!-- Plotly chart will be drawn inside this DIV --></div>
+    <div id='myDiv'></div>
 
     <!-- Pass the plot data to a data-* attribute -->
     <div id="plotDataDiv" data-plot-data='{{ plot_data | tojson | safe }}'></div>

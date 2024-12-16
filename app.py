@@ -4,7 +4,7 @@ Flask application for F1
 
 import os
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, jsonify, request
 from flask_session import Session
 
 from engine import *
@@ -45,9 +45,6 @@ def homepage():
 @app.route("/<int:year>")
 def leaderboard(year):
 
-    # Build a dictionary to group points by driver
-    driver_data = {}
-
     # Get all races for the given year
     all_races = (
         db.session.query(Race.id, Race.name)
@@ -59,7 +56,8 @@ def leaderboard(year):
     # Convert race list to a dictionary for easier lookup
     race_lookup = [{race.id: race.name} for race in all_races]
 
-    # print(race_lookup)
+    # Build a dictionary to group points by driver
+    driver_data = {}
 
     # Get all drivers who participated in at least one race that year
     all_drivers = (
@@ -70,6 +68,7 @@ def leaderboard(year):
         .distinct()
         .all()
     )
+    print(all_drivers)
 
     # Initialize driver data structure
     for driver in all_drivers:
@@ -106,7 +105,7 @@ def leaderboard(year):
     # Convert driver_data to a list of dicts for Plotly
     plot_data = list(driver_data.values())
 
-    # print(plot_data)
+    print(plot_data)
 
     aggregate_ratings = (
         db.session.query(
@@ -125,63 +124,99 @@ def leaderboard(year):
     return render_template("leaderboard.html", year=year, standings=aggregate_ratings, plot_data=plot_data, race_lookup=race_lookup)
 
 
+# ============================================ DRIVER NAMES ============================================ #
+@app.route('/api/drivers', methods=['GET'])
+def get_drivers():
+    
+    # Query all driver names for the comparisons
+    drivers = db.session.query(Driver.name).distinct().all()
+    driver_names = [driver[0] for driver in drivers]
+    
+    return jsonify(driver_names)
+
+
+# ========================================== AVAILABLE YEARS ========================================== #
+@app.route('/api/years', methods=['GET'])
+def get_years_for_driver():
+
+    driver_name = request.args.get('driver_name')
+    if not driver_name:
+        return jsonify([])
+    
+    # Query all years the driver participated
+    years = (
+        db.session.query(Race.year)
+        .join(Rating, Rating.race_id == Race.id)
+        .join(Driver, Driver.id == Rating.driver_id)
+        .filter(Driver.name == driver_name)
+        .distinct()
+        .order_by(Race.year)
+        .all()
+    )
+    year_list = [year[0] for year in years]
+
+    return jsonify(year_list)
+
+
 # ============================================ COMPARISONS ============================================ #
 @app.route("/season-compare", methods=["GET", "POST"])
 def season_compare():
+
     if request.method == "POST":
+
         # Get the drivers and years from the form
         driver1_name = request.form.get("driver1_name")
         year1 = int(request.form.get("year1"))
         driver2_name = request.form.get("driver2_name")
         year2 = int(request.form.get("year2"))
 
-        # Fetch data for driver 1
-        driver1_data = (
-            db.session.query(
-                Race.id.label("race_id"),
-                Race.year.label("year"),
-                func.sum(Rating.adjusted_points).label("points")
+        # Function to fetch driver data
+        def fetch_driver_data(driver_name, year):
+            # Fetch all races for the specified year
+            races = (
+                db.session.query(Race.id, Race.name)
+                .filter(Race.year == year)
+                .order_by(Race.id)
+                .all()
             )
-            .join(Rating, Race.id == Rating.race_id)
-            .join(Driver, Rating.driver_id == Driver.id)
-            .filter(Driver.name == driver1_name, Race.year == year1)
-            .group_by(Race.id)
-            .order_by(Race.id)
-            .all()
-        )
 
-        # Fetch data for driver 2
-        driver2_data = (
-            db.session.query(
-                Race.id.label("race_id"),
-                Race.year.label("year"),
-                func.sum(Rating.adjusted_points).label("points")
-            )
-            .join(Rating, Race.id == Rating.race_id)
-            .join(Driver, Rating.driver_id == Driver.id)
-            .filter(Driver.name == driver2_name, Race.year == year2)
-            .group_by(Race.id)
-            .order_by(Race.id)
-            .all()
-        )
+            cumulative_points = 0
+            driver_race_data = {
+                "driver": f"{driver_name} ({year})",
+                "races": [],  # x-axis: race names
+                "points": [],  # y-axis: cumulative points
+            }
 
-        # Convert data to plot format
-        def prepare_plot_data(driver_data):
-            races = list(range(1, len(driver_data) + 1))  # Number races sequentially
-            points = [row.points for row in driver_data]
-            return {"races": races, "points": points}
+            for race in races:
+                # Fetch the points for this driver in the current race
+                rating = (
+                    db.session.query(func.sum(Rating.adjusted_points))
+                    .join(Driver, Rating.driver_id == Driver.id)
+                    .filter(
+                        Driver.name == driver_name,
+                        Rating.race_id == race.id,
+                    )
+                    .scalar()
+                )
 
-        plot_data = {
-            "driver1": {
-                "name": f"{driver1_name} ({year1})",
-                **prepare_plot_data(driver1_data),
-            },
-            "driver2": {
-                "name": f"{driver2_name} ({year2})",
-                **prepare_plot_data(driver2_data),
-            },
-        }
+                # If no points exist, assume the driver didn't participate
+                rating = rating or 0
 
+                # Update cumulative points and add race name
+                cumulative_points += rating
+                driver_race_data["races"].append(race.name)  # Add race name
+                driver_race_data["points"].append(cumulative_points)  # Add cumulative points
+
+            return driver_race_data
+
+        # Fetch data for both drivers
+        driver1_plot_data = fetch_driver_data(driver1_name, year1)
+        driver2_plot_data = fetch_driver_data(driver2_name, year2)
+
+        # Prepare plot data
+        plot_data = [driver1_plot_data, driver2_plot_data]
+
+        # Render the comparison template with the plot data
         return render_template("compare.html", plot_data=plot_data)
 
     # Render the input form for GET requests
@@ -189,7 +224,24 @@ def season_compare():
 
 
 
+# ============================================ FETCH NAMES ============================================ #
+def fetch_names(year):
+
+    driver_names = (
+        db.session.query(Driver.name)
+        .join(Rating, Driver.id == Rating.driver_id)
+        .join(Race, Rating.race_id == Race.id)
+        .filter(Race.year == year)
+        .distinct()  # Ensure unique driver names
+        .all()
+    )
+
+    return [name[0] for name in driver_names]
+
+
+# ================================================ MAIN ================================================ #
 if __name__ == "__main__":
     with app.app_context():  
         with app.test_request_context():
             leaderboard(2020)
+            print(fetch_names(2020))

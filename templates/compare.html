@@ -4,71 +4,127 @@
 Season Compare
 {% endblock %}
 
+
+
 {% block main %}
+<!-- Load plotly.js into the DOM -->
+<script src='https://cdn.plot.ly/plotly-2.35.2.min.js'></script>
+
+<script src="static/ratings-plot.js" type="module"></script>
+
+
 <div class="container">
     <h1 class="my-4">Compare Driver Seasons</h1>
 
-    <!-- Input form -->
-    <form method="POST">
-        <div class="row">
-            <div class="col-md-6">
-                <label for="driver1_name">Driver 1:</label>
-                <input type="text" id="driver1_name" name="driver1_name" class="form-control" placeholder="e.g., Schumacher" required>
-                <label for="year1">Year:</label>
-                <input type="number" id="year1" name="year1" class="form-control" placeholder="e.g., 2000" required>
-            </div>
-            <div class="col-md-6">
-                <label for="driver2_name">Driver 2:</label>
-                <input type="text" id="driver2_name" name="driver2_name" class="form-control" placeholder="e.g., Hamilton" required>
-                <label for="year2">Year:</label>
-                <input type="number" id="year2" name="year2" class="form-control" placeholder="e.g., 2020" required>
-            </div>
+<form method="POST">
+    <div class="row">
+        <div class="col-md-6">
+            <label for="driver1_name">Driver 1:</label>
+            <input type="text" id="driver1_name" name="driver1_name" class="form-control" placeholder="e.g., Michael Schumacher" required list="driver1_suggestions">
+            <datalist id="driver1_suggestions"></datalist> <!-- Autocomplete suggestions -->
+
+            <label for="year1">Year:</label>
+            <select id="year1" name="year1" class="form-control" required disabled>
+                <option value="">Select Year</option>
+            </select>
         </div>
-        <button type="submit" class="btn btn-primary mt-3">Compare</button>
-    </form>
+
+        <div class="col-md-6">
+            <label for="driver2_name">Driver 2:</label>
+            <input type="text" id="driver2_name" name="driver2_name" class="form-control" placeholder="e.g., Lewis Hamilton" required list="driver2_suggestions">
+            <datalist id="driver2_suggestions"></datalist> <!-- Autocomplete suggestions -->
+
+            <label for="year2">Year:</label>
+            <select id="year2" name="year2" class="form-control" required disabled>
+                <option value="">Select Year</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Compare</button>
+</form>
 
     <!-- Plotly chart -->
-    {% if plot_data %}
     <div id="comparisonDiv" class="mt-5"></div>
 
-    <div id="plotDataDiv" data-plot-data='{{ plot_data | tojson | safe }}'></div>
-
-
-    <!-- Pass plot data to JavaScript -->
     <script>
+        document.addEventListener("DOMContentLoaded", () => {
+        const driver1Input = document.getElementById("driver1_name");
+        const year1Dropdown = document.getElementById("year1");
+        const driver2Input = document.getElementById("driver2_name");
+        const year2Dropdown = document.getElementById("year2");
 
-        // Prepare traces
-        const data = [
-            {
-                x: plotData.driver1.races,
-                y: plotData.driver1.points,
-                mode: "lines+markers",
-                name: plotData.driver1.name,
-            },
-            {
-                x: plotData.driver2.races,
-                y: plotData.driver2.points,
-                mode: "lines+markers",
-                name: plotData.driver2.name,
-            },
-        ];
+        function fetchYears(driverName, yearDropdown) {
+            if (!driverName) return;
 
-        // Layout options
-        const layout = {
-            title: "Season Comparison",
-            xaxis: {
-                title: "Race Number",
-                tickmode: "array",
-                tickvals: Array.from({ length: Math.max(plotData.driver1.races.length, plotData.driver2.races.length) }, (_, i) => i + 1),
-            },
-            yaxis: {
-                title: "Total Points",
-            },
-        };
+            fetch(`/api/years?driver_name=${encodeURIComponent(driverName)}`)
+                .then((response) => response.json())
+                .then((years) => {
+                    // Clear the dropdown options
+                    yearDropdown.innerHTML = '<option value="">Select Year</option>';
+                    years.forEach((year) => {
+                        const option = document.createElement("option");
+                        option.value = year;
+                        option.textContent = year;
+                        yearDropdown.appendChild(option);
+                    });
+                    yearDropdown.disabled = false; // Enable the dropdown
+                })
+                .catch((error) => console.error("Error fetching years:", error));
+        }
 
-        // Render Plotly chart
-        Plotly.newPlot("comparisonDiv", data, layout);
+        // Event listener for driver 1
+        driver1Input.addEventListener("input", () => {
+            const driverName = driver1Input.value.trim();
+            fetchYears(driverName, year1Dropdown);
+        });
+
+        // Event listener for driver 2
+        driver2Input.addEventListener("input", () => {
+            const driverName = driver2Input.value.trim();
+            fetchYears(driverName, year2Dropdown);
+        });
+    });
     </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const driver1Datalist = document.getElementById("driver1_suggestions");
+
+            fetch("/api/drivers")
+                .then((response) => response.json())
+                .then((drivers) => {
+                    drivers.forEach((driver) => {
+                        const option = document.createElement("option");
+                        option.value = driver;
+                        driver1Datalist.appendChild(option);
+                    });
+                })
+                .catch((error) => console.error("Error fetching drivers:", error));
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const driver2Datalist = document.getElementById("driver2_suggestions");
+
+            fetch("/api/drivers")
+                .then((response) => response.json())
+                .then((drivers) => {
+                    drivers.forEach((driver) => {
+                        const option = document.createElement("option");
+                        option.value = driver;
+                        driver2Datalist.appendChild(option);
+                    });
+                })
+                .catch((error) => console.error("Error fetching drivers:", error));
+        });
+    </script>
+
+    {% if plot_data %}
+    <div id='myDiv'></div>
+    
+    <div id="plotDataDiv" data-plot-data='{{ plot_data | tojson | safe }}'></div>
     {% endif %}
+
 </div>
 {% endblock %}
