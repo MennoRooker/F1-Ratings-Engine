@@ -412,3 +412,5 @@ log.txt
 # Ignore copies
 *_copy.txt
 
+# Ignore backup file(s)
+*_js.txt

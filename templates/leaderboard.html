@@ -37,6 +37,8 @@ Leaderboards
 
     <!-- Pass the plot data to a data-* attribute -->
     <div id="plotDataDiv" data-plot-data='{{ plot_data | tojson | safe }}'></div>
+
+    <div id="raceLookupDiv" data-race-lookup='{{ race_lookup | tojson | safe }}' style="display: none;"></div>
     
 </div>
 {% endblock %}

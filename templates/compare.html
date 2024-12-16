@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Season Compare
+{% endblock %}
+
+{% block main %}
+<div class="container">
+    <h1 class="my-4">Compare Driver Seasons</h1>
+
+    <!-- Input form -->
+    <form method="POST">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="driver1_name">Driver 1:</label>
+                <input type="text" id="driver1_name" name="driver1_name" class="form-control" placeholder="e.g., Schumacher" required>
+                <label for="year1">Year:</label>
+                <input type="number" id="year1" name="year1" class="form-control" placeholder="e.g., 2000" required>
+            </div>
+            <div class="col-md-6">
+                <label for="driver2_name">Driver 2:</label>
+                <input type="text" id="driver2_name" name="driver2_name" class="form-control" placeholder="e.g., Hamilton" required>
+                <label for="year2">Year:</label>
+                <input type="number" id="year2" name="year2" class="form-control" placeholder="e.g., 2020" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Compare</button>
+    </form>
+
+    <!-- Plotly chart -->
+    {% if plot_data %}
+    <div id="comparisonDiv" class="mt-5"></div>
+
+    <div id="plotDataDiv" data-plot-data='{{ plot_data | tojson | safe }}'></div>
+
+
+    <!-- Pass plot data to JavaScript -->
+    <script>
+
+        // Prepare traces
+        const data = [
+            {
+                x: plotData.driver1.races,
+                y: plotData.driver1.points,
+                mode: "lines+markers",
+                name: plotData.driver1.name,
+            },
+            {
+                x: plotData.driver2.races,
+                y: plotData.driver2.points,
+                mode: "lines+markers",
+                name: plotData.driver2.name,
+            },
+        ];
+
+        // Layout options
+        const layout = {
+            title: "Season Comparison",
+            xaxis: {
+                title: "Race Number",
+                tickmode: "array",
+                tickvals: Array.from({ length: Math.max(plotData.driver1.races.length, plotData.driver2.races.length) }, (_, i) => i + 1),
+            },
+            yaxis: {
+                title: "Total Points",
+            },
+        };
+
+        // Render Plotly chart
+        Plotly.newPlot("comparisonDiv", data, layout);
+    </script>
+    {% endif %}
+</div>
+{% endblock %}
