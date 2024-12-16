@@ -170,7 +170,7 @@ def season_compare():
         driver2_name = request.form.get("driver2_name")
         year2 = int(request.form.get("year2"))
 
-        # Function to fetch driver data
+        # Function to fetch driver data for a specific year and driver
         def fetch_driver_data(driver_name, year):
             # Fetch all races for the specified year
             races = (
@@ -180,13 +180,16 @@ def season_compare():
                 .all()
             )
 
-            cumulative_points = 0
-            driver_race_data = {
+            # Initialize the driver data structure
+            driver_data = {
                 "driver": f"{driver_name} ({year})",
                 "races": [],  # x-axis: race names
                 "points": [],  # y-axis: cumulative points
+                "cumulative_points": 0,
             }
 
+            # Populate points for each race
+            cumulative_points = 0
             for race in races:
                 # Fetch the points for this driver in the current race
                 rating = (
@@ -200,21 +203,23 @@ def season_compare():
                 )
 
                 # If no points exist, assume the driver didn't participate
-                rating = rating or 0
+                if rating is None:
+                    rating = 0
 
-                # Update cumulative points and add race name
+                # Update cumulative points and race data
                 cumulative_points += rating
-                driver_race_data["races"].append(race.name)  # Add race name
-                driver_race_data["points"].append(cumulative_points)  # Add cumulative points
+                driver_data["races"].append(race.name)  # Add race name to x-axis
+                driver_data["points"].append(cumulative_points)  # Append cumulative points
 
-            return driver_race_data
+            return driver_data
 
         # Fetch data for both drivers
-        driver1_plot_data = fetch_driver_data(driver1_name, year1)
-        driver2_plot_data = fetch_driver_data(driver2_name, year2)
+        driver1_data = fetch_driver_data(driver1_name, year1)
+        driver2_data = fetch_driver_data(driver2_name, year2)
 
         # Prepare plot data
-        plot_data = [driver1_plot_data, driver2_plot_data]
+        plot_data = [driver1_data, driver2_data]
+
 
         # Render the comparison template with the plot data
         return render_template("compare.html", plot_data=plot_data)
