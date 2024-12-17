@@ -48,7 +48,7 @@ def leaderboard(year):
     and plots their scores over time"""
 
     # Check if the penalties tick-box is applied from the query parameter
-    apply_penalties = request.args.get("apply_penalties", "false").lower() == "false"
+    apply_penalties = request.args.get("apply_penalties", "false").lower() == "true"
 
     # Get all races for the given year
     all_races = (
@@ -194,16 +194,21 @@ def get_years_for_driver():
 @app.route("/season-compare", methods=["GET", "POST"])
 def season_compare():
 
-    if request.method == "POST":
+    if request.method == "POST" or request.method == "GET":
+
+        # Check if the penalties tick-box is applied from the query parameter
+        apply_penalties = request.args.get("apply_penalties", "false").lower() == "true"
+
 
         # Get the drivers and years from the form
-        driver1_name = request.form.get("driver1_name")
-        year1 = int(request.form.get("year1"))
-        driver2_name = request.form.get("driver2_name")
-        year2 = int(request.form.get("year2"))
+        driver1_name = request.args.get("driver1_name") or request.form.get("driver1_name")
+        year1 = request.args.get("year1") or request.form.get("year1")
+        driver2_name = request.args.get("driver2_name") or request.form.get("driver2_name")
+        year2 = request.args.get("year2") or request.form.get("year2")
 
         # Function to fetch driver data for a specific year and driver
-        def fetch_driver_data(driver_name, year):
+        def fetch_driver_data(driver_name, year, apply_penalties):
+
             # Fetch all races for the specified year
             races = (
                 db.session.query(Race.id, Race.name)
@@ -223,16 +228,30 @@ def season_compare():
             # Populate points for each race
             cumulative_points = 0
             for race in races:
-                # Fetch the points for this driver in the current race
-                rating = (
-                    db.session.query(func.sum(Rating.adjusted_points))
-                    .join(Driver, Rating.driver_id == Driver.id)
-                    .filter(
-                        Driver.name == driver_name,
-                        Rating.race_id == race.id,
+
+                if apply_penalties:
+                    # Query for the adjusted points
+                    rating = (
+                        db.session.query(func.sum(Rating.adjusted_points))
+                        .join(Driver, Rating.driver_id == Driver.id)
+                        .filter(
+                            Driver.name == driver_name,
+                            Rating.race_id == race.id,
+                        )
+                        .scalar()
                     )
-                    .scalar()
-                )
+
+                else:
+                    # Query for the regular points
+                    rating = (
+                        db.session.query(func.sum(Rating.points))
+                        .join(Driver, Rating.driver_id == Driver.id)
+                        .filter(
+                            Driver.name == driver_name,
+                            Rating.race_id == race.id,
+                        )
+                        .scalar()
+                    )
 
                 # If no points exist, assume the driver didn't participate
                 if rating is None:
@@ -246,15 +265,15 @@ def season_compare():
             return driver_data
 
         # Fetch data for both drivers
-        driver1_data = fetch_driver_data(driver1_name, year1)
-        driver2_data = fetch_driver_data(driver2_name, year2)
+        if driver1_name and driver2_name and year1 and year2:
+            # Proceed with data fetching and rendering
+            driver1_data = fetch_driver_data(driver1_name, int(year1), apply_penalties)
+            driver2_data = fetch_driver_data(driver2_name, int(year2), apply_penalties)
+            plot_data = [driver1_data, driver2_data]
 
-        # Prepare plot data
-        plot_data = [driver1_data, driver2_data]
 
-
-        # Render the comparison template with the plot data
-        return render_template("compare.html", plot_data=plot_data)
+            # Render the comparison template with the plot data
+            return render_template("compare.html", plot_data=plot_data, apply_penalties=apply_penalties)
 
     # Render the input form for GET requests
     return render_template("compare.html")

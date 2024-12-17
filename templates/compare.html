@@ -121,6 +121,25 @@ Season Compare
     </script>
 
     {% if plot_data %}
+    <!-- Tick-box to toggle penalties -->
+    <form method="get" action="{{ url_for('season_compare') }}">
+        <!-- Preserve driver and year values -->
+        <input type="hidden" name="driver1_name" value="{{ request.form.get('driver1_name', '') }}">
+        <input type="hidden" name="year1" value="{{ request.form.get('year1', '') }}">
+        <input type="hidden" name="driver2_name" value="{{ request.form.get('driver2_name', '') }}">
+        <input type="hidden" name="year2" value="{{ request.form.get('year2', '') }}">
+    
+        <!-- Tick-box -->
+        <label>
+            <input type="checkbox" name="apply_penalties" value="true" 
+                   {% if apply_penalties %}checked{% endif %}>
+            With Penalties
+        </label>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+    
+
+
     <div id='myDiv'></div>
     
     <div id="plotDataDiv" data-plot-data='{{ plot_data | tojson | safe }}'></div>
