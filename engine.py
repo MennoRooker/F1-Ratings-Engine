@@ -71,8 +71,10 @@ def populate_ratings(race, penalties, season, is_first_race):
 
         if is_first_race:
             adjusted_points = result.points
+
         # Calculate adjusted points
         penalty = penalties.get(constructor_id, 0)
+        points = result.points
         adjusted_points = result.points - penalty
 
         # Set zero-sum rating to 0
@@ -84,6 +86,7 @@ def populate_ratings(race, penalties, season, is_first_race):
             constructor_id=constructor_id,
             race_id=race.id,
             year=season,
+            points=points,
             adjusted_points=adjusted_points,
             zero_sum_rating=zero_sum_rating
         )
@@ -94,37 +97,37 @@ def populate_ratings(race, penalties, season, is_first_race):
 
 # ============================================== SEASONS ============================================== #
 def process_season(season):
-    """Process the season and populate the ratings table with adjusted points.
-    All pre-2010 seasons will adopt the post-2010 scoring system for consistency reasons."""
+    """Process the season and populate the ratings table with adjusted points --
+    All pre-2010 seasons will adopt the post-2010 scoring system and the post-2010 seasons
+    will not include fastest laps or sprint races for consistency reasons"""
 
-    # Introduce post-2010 scoring system to apply to all pre-2010 seasons
-    if season < 2010:
-        scoring_system = {
-            1: 25,
-            2: 18,
-            3: 15,
-            4: 12,
-            5: 10,
-            6: 8,
-            7: 6,
-            8: 4,
-            9: 2,
-            10: 1
-        }
+    # Introduce post-2010 scoring system to apply to all seasons
+    scoring_system = {
+        1: 25,
+        2: 18,
+        3: 15,
+        4: 12,
+        5: 10,
+        6: 8,
+        7: 6,
+        8: 4,
+        9: 2,
+        10: 1
+    }
 
-        # Get all results for all races
-        results = db.session.query(Result).all()
-        
-        # Change results to match post-2010 scoring system
-        for result in results:
-            if result.position is None:
-                result.points = 0
-            else:
-                result.points = scoring_system.get(result.position, 0)  # Default to 0 for positions > 10
+    # Get all results for all races
+    results = db.session.query(Result).all()
+    
+    # Change results to match post-2010 scoring system
+    for result in results:
+        if result.position is None:
+            result.points = 0
+        else:
+            result.points = scoring_system.get(result.position, 0)  # Default to 0 for positions > 10
 
-        # Commit changes to the database
-        db.session.commit()
-        print("Points updated to post-2010 scoring system.")
+    # Commit changes to the database
+    db.session.commit()
+    print("Points updated to post-2010 scoring system.")
    
     races = (
         db.session.query(Race)
@@ -135,6 +138,7 @@ def process_season(season):
 
     print(f"\nGenerating adjusted points for {season} season\n")
 
+    # Iterate over the races in a season and apply penalties where needed
     for i, race in enumerate(races):
         
         print(f"\nProcessing Race {race.id} - {race.name}")
@@ -142,7 +146,7 @@ def process_season(season):
         penalties = assign_penalties(standings)
 
         if i == 0:
-            populate_ratings(race, penalties, season, is_first_race=True)  # Add the regular points for the first race
+            populate_ratings(race, penalties, season, is_first_race=True)  # No penalties for the first race
         else:
             populate_ratings(race, penalties, season, is_first_race=False)  
 

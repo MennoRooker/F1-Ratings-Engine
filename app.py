@@ -44,6 +44,11 @@ def homepage():
 # ============================================ LEADERBOARD ============================================ #
 @app.route("/<int:year>")
 def leaderboard(year):
+    """Displays the points and adjusted ratings of all drivers that participated in a season
+    and plots their scores over time"""
+
+    # Check if the penalties tick-box is applied from the query parameter
+    apply_penalties = request.args.get("apply_penalties", "false").lower() == "false"
 
     # Get all races for the given year
     all_races = (
@@ -68,7 +73,6 @@ def leaderboard(year):
         .distinct()
         .all()
     )
-    print(all_drivers)
 
     # Initialize driver data structure
     for driver in all_drivers:
@@ -79,38 +83,56 @@ def leaderboard(year):
             "cumulative_points": 0,
         }
 
-    # Populate points for each race
-    for race in all_races:
-        for driver in all_drivers:
-            # Check if this driver has points for this race
-            rating = (
-                db.session.query(Rating.adjusted_points)
-                .filter(
-                    Rating.race_id == race.id,
-                    Rating.driver_id == driver.id,
-                )
-                .scalar()
-            )
+    def with_or_without_penalties(apply_penalties):
+        """Returns the regular points if user has not ticked 'With Penalties' box, and 
+        returns adjusted points if the box IS ticked"""
 
-            # If no rating exists, assume the driver didn't participate
-            if rating is None:
-                rating = 0
+        # Populate points for each race
+        for race in all_races:
+            for driver in all_drivers:
+                
+                if apply_penalties:
+                    # Query for the adjusted points
+                    rating = (
+                        db.session.query(Rating.adjusted_points)
+                        .filter(
+                            Rating.race_id == race.id,
+                            Rating.driver_id == driver.id,
+                        )
+                        .scalar()
+                    )
 
-            # Update the driver's data
-            driver_name = driver.name
-            driver_data[driver_name]["races"].append(race.name)  # Add race name to x-axis
-            driver_data[driver_name]["cumulative_points"] += rating  # Add cumulative points
-            driver_data[driver_name]["points"].append(driver_data[driver_name]["cumulative_points"]) 
+                else:
+                    # Query for the regular points
+                    rating = (
+                        db.session.query(Rating.points)
+                        .filter(
+                            Rating.race_id == race.id,
+                            Rating.driver_id == driver.id,
+                        )
+                        .scalar()
+                    )
+
+                # If no rating exists, assume the driver didn't participate
+                if rating is None:
+                    rating = 0
+
+                # Update the driver's data
+                driver_name = driver.name
+                driver_data[driver_name]["races"].append(race.name)  # Add race name to x-axis
+                driver_data[driver_name]["cumulative_points"] += rating  # Add cumulative points
+                driver_data[driver_name]["points"].append(driver_data[driver_name]["cumulative_points"])
+
+        return driver_data.values()
 
     # Convert driver_data to a list of dicts for Plotly
-    plot_data = list(driver_data.values())
-
-    print(plot_data)
+    plot_data = list(with_or_without_penalties(apply_penalties))
 
     aggregate_ratings = (
         db.session.query(
             Driver.name,
-            func.sum(Rating.adjusted_points).label("total_points"),
+            func.sum(Rating.points).label("points"),
+            func.sum(Rating.adjusted_points).label("adjusted_points"),
             func.sum(Rating.zero_sum_rating).label("zero_sum_rating")
         )
         .join(Rating, Driver.id == Rating.driver_id)
@@ -121,12 +143,21 @@ def leaderboard(year):
         .all()
     )
 
-    return render_template("leaderboard.html", year=year, standings=aggregate_ratings, plot_data=plot_data, race_lookup=race_lookup)
+    return render_template(
+        "leaderboard.html",
+        year=year,
+        standings=aggregate_ratings,
+        plot_data=plot_data,
+        race_lookup=race_lookup,
+        apply_penalties=apply_penalties
+    )
+
 
 
 # ============================================ DRIVER NAMES ============================================ #
 @app.route('/api/drivers', methods=['GET'])
 def get_drivers():
+    """Creates an API route to store all 800+ Formula 1 drivers"""
     
     # Query all driver names for the comparisons
     drivers = db.session.query(Driver.name).distinct().all()
@@ -138,6 +169,7 @@ def get_drivers():
 # ========================================== AVAILABLE YEARS ========================================== #
 @app.route('/api/years', methods=['GET'])
 def get_years_for_driver():
+    """Creates an API route to store the active years for specific drivers"""
 
     driver_name = request.args.get('driver_name')
     if not driver_name:
@@ -231,6 +263,7 @@ def season_compare():
 
 # ============================================ FETCH NAMES ============================================ #
 def fetch_names(year):
+    """Test function"""
 
     driver_names = (
         db.session.query(Driver.name)

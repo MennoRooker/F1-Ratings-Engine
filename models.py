@@ -88,6 +88,7 @@ class Rating(db.Model):
     constructor_id = db.Column(db.Integer, db.ForeignKey("constructors.id"), nullable=False)
     race_id = db.Column(db.Integer, db.ForeignKey("races.id"), nullable=False)
     year = db.Column(db.Integer, nullable=False) 
+    points = db.Column(db.Float, nullable=False)
     adjusted_points = db.Column(db.Float, nullable=False)  # Corrected points after penalties
     zero_sum_rating = db.Column(db.Integer, nullable=False)  # Adds a zero-sum option for ranking
 
