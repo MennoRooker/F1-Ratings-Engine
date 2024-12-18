@@ -21,7 +21,6 @@ Leaderboards
                 <th>Driver</th>
                 <th>Points</th>
                 <th>Adjusted Points</th>
-                <th>Zero-Sum Rating</th>
             </tr>
         </thead>
         <tbody>
@@ -31,7 +30,6 @@ Leaderboards
                 <td>{{ driver }}</td>
                 <td>{{ total_points|round|int if total_points.is_integer() else total_points }}</td>
                 <td>{{ adjusted_points|round|int if adjusted_points.is_integer() else adjusted_points }}</td>
-                <td>{{ zero_sum_rating }}</td>
             </tr>
             {% endfor %}
         </tbody>

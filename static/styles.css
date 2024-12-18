@@ -1,0 +1,64 @@
+/* General Styles */
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Formula 1 Red Theme */
+.bg-dark-red {
+    background-color: #d71920; /* Bright F1 Red */
+}
+
+.nav-link {
+    transition: color 0.3s ease-in-out;
+}
+
+.nav-link:hover {
+    color: #ffc107; /* Yellow hover effect */
+}
+
+/* Header */
+header a.navbar-brand {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+header .nav-link {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Flash Messages */
+.alert {
+    font-weight: bold;
+}
+
+/* Main Content */
+main {
+    background: #fff;
+    border: 2px solid #d71920;
+    border-radius: 8px;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #d71920;
+    border: none;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #b8151b;
+    color: #fff;
+}
+
+/* Footer */
+footer {
+    background-color: #222;
+    color: #bbb;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}

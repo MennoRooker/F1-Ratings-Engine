@@ -153,6 +153,46 @@ def leaderboard(year):
     )
 
 
+# ============================================ ALL-TIME LEADERBOARD ============================================ #
+@app.route("/all-time")
+def all_time_leaderboard():
+    """Displays the top 20 highest cumulative adjusted points achieved by drivers across their careers."""
+
+    # Calculate cumulative adjusted points for each race (over all races) for each driver
+    cumulative_points = (
+        db.session.query(
+            Driver.id.label("driver_id"),
+            Driver.name.label("driver_name"),
+            Race.name.label("race_name"),
+            Race.year.label("race_year"),
+            func.sum(Rating.adjusted_points).over(
+                partition_by=Driver.id, order_by=Race.id
+            ).label("cumulative_adjusted_points"),
+        )
+        .join(Rating, Driver.id == Rating.driver_id)
+        .join(Race, Rating.race_id == Race.id)
+        .subquery()
+    )
+
+    # Now, select the highest cumulative adjusted points for each driver
+    peak_points_query = (
+        db.session.query(
+            cumulative_points.c.driver_name,
+            func.max(cumulative_points.c.cumulative_adjusted_points).label("highest_cumulative_points")
+        )
+        .group_by(cumulative_points.c.driver_name)
+        .order_by(func.max(cumulative_points.c.cumulative_adjusted_points).desc())
+        .limit(20)  # Only return the top 20 drivers
+        .all()
+    )
+
+    # Render the leaderboard template
+    return render_template(
+        "all-time.html",
+        standings=peak_points_query
+    )
+
+
 
 # ============================================ DRIVER NAMES ============================================ #
 @app.route('/api/drivers', methods=['GET'])
@@ -278,27 +318,3 @@ def season_compare():
     # Render the input form for GET requests
     return render_template("compare.html")
 
-
-
-# ============================================ FETCH NAMES ============================================ #
-def fetch_names(year):
-    """Test function"""
-
-    driver_names = (
-        db.session.query(Driver.name)
-        .join(Rating, Driver.id == Rating.driver_id)
-        .join(Race, Rating.race_id == Race.id)
-        .filter(Race.year == year)
-        .distinct()  # Ensure unique driver names
-        .all()
-    )
-
-    return [name[0] for name in driver_names]
-
-
-# ================================================ MAIN ================================================ #
-if __name__ == "__main__":
-    with app.app_context():  
-        with app.test_request_context():
-            leaderboard(2020)
-            print(fetch_names(2020))

@@ -1,35 +1,130 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>F1 Leaderboards</title>
-</head>
-<body>
-    <header>
-        <h1>Welcome to the F1 Leaderboards!</h1>
-        <p>Explore driver and constructor standings across seasons and all-time rankings.</p>
-        <nav>
-            <a href="/all-time">All-Time Leaderboard</a>
-            <a href="/season-compare">Compare Seasons</a>
-        </nav>
-    </header>
+{% extends "layout.html" %}
 
-    <section id="highlights">
-        <h2>Highlights</h2>
-        <p><strong>World Champion 2024:</strong> Max Verstappen</p>
-        <p><strong>Leading Constructor:</strong> Red Bull Racing</p>
-    </section>
+{% block title %}
+F1 Leaderboards
+{% endblock %}
 
-    <section id="season-dropdown">
-        <h2>Select a Season</h2>
-        <form method="get" action="">
-            <label for="season">Choose a season:</label>
-            <select name="season" id="season" onchange="location = this.value;">
+{% block main %}
+<div class="text-center mb-4">
+    <h1 class="fw-bold text-danger">Welcome to the F1 Leaderboards!</h1>
+</div>
+
+<!-- Navigation Section -->
+<div class="d-flex justify-content-center gap-3 mb-5">
+    <a href="/all-time" class="btn btn-outline-danger btn-lg">All-Time Leaderboard</a>
+    <a href="/season-compare" class="btn btn-outline-danger btn-lg">Compare Seasons</a>
+</div>
+
+<!-- Webpage Explanation -->
+<div class="text-center mb-4">
+    <p class="lead text-dark">
+        Formula 1 is often refered to as the pinnacle of motor sport with its high-speed action and 
+        remarkable combination of strength and finesse needed to operate its single-seater cars.
+        Formula 1 drivers are seen as the best of the best when it comes to finding small optimizations
+        in turns and finding a way to overtake competitors moving at 300+ km/h. However, it would be 
+        wrong to suggest that Formula 1 is a one-man show. 
+        <br><br>
+        Behind every points earned is a team of dozens of strategists, engineers and analysts whose 
+        job it is to gain an inch anywhere they can. F1 is as much a motorsport as it is a huge engineering 
+        endeavor. So much so that much of the success of certain drivers is attributed to their team 
+        rather than to them.
+        <br><br>
+        "Races are won at the track. Championships are won at the factory."  -Mercedes (2019)
+        <br><br>
+        While many people can appreciate the technical intricacies of building what is essentialy a
+        rocketship with wheels, others simply want to know who is truly the best driver on the grid.
+        Any discussion about the best drivers in the world seems to inevitably turn into an argument
+        about the importance of having the best car, which is where this leaderboard comes in!
+        <br><br>
+        Here below is an attempt to quantify this importance by applying penalties to the drivers whose 
+        teams are leading the constructors standings. This way a driver with good machinery 
+        needs to score significantly more points than his competitors if he wants to stay on top. 
+        The penalties are calculated dynamically throughout a season and applied at the start of a race 
+        (not the first race of the season since there are no standings yet), these penalties are deducted
+        from the points they earn during the race. 
+    </p>
+</div>
+
+<!-- Penalties Table -->
+<div class="container text-center">
+    <h2 class="text-dark mb-3">Constructors:</h2>
+    <table class="table table-striped table-bordered w-50 mx-auto">
+        <thead>
+            <tr>
+                <th>Standing</th>
+                <th>Penalties</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1st</td>
+                <td>-10</td>
+            </tr>
+            <tr>
+                <td>2nd</td>
+                <td>-9</td>
+            </tr>
+            <tr>
+                <td>3rd</td>
+                <td>-8</td>
+            </tr>
+            <tr>
+                <td>4th</td>
+                <td>-7</td>
+            </tr>
+            <tr>
+                <td>5th</td>
+                <td>-6</td>
+            </tr>
+            <tr>
+                <td>6th</td>
+                <td>-5</td>
+            </tr>
+            <tr>
+                <td>7th</td>
+                <td>-4</td>
+            </tr>
+            <tr>
+                <td>8th</td>
+                <td>-3</td>
+            </tr>
+            <tr>
+                <td>9th</td>
+                <td>-2</td>
+            </tr>
+            <tr>
+                <td>10th</td>
+                <td>-1</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Webpage Explanation -->
+<div class="text-center mb-4">
+    <p class="lead text-dark">
+        For consistency reasons the post-2010 scoring system is applied to all seasons and any points
+        earned from the fastest lap are removed. The dataset used consists of information from 1950  to 2024.
+        <br><br>
+        Select individual seasons below or navigate to the top of this page and have a look at the
+        all-time peak ratings of drivers throughout their career at 'All-Time Leaderboard'. You can also compare a single season
+        of a driver to another season of a different driver at 'Compare Seasons'.
+    </p>
+</div>
+
+<!-- Season Selection Dropdown -->
+<section id="season-dropdown" class="text-center">
+    <h2 class="text-dark mb-3">Select a Season</h2>
+    <form method="get" action="">
+        <label for="season" class="form-label fw-bold">Choose a season:</label>
+        <div class="d-flex justify-content-center">
+            <select name="season" id="season" class="form-select w-50" onchange="location = this.value;">
                 <option value="" disabled selected>Select a season</option>
                 {% for season in seasons %}
                 <option value="/{{ season }}">{{ season }}</option>
                 {% endfor %}
             </select>
-        </form>
-    </section>
-</body>
-</html>
+        </div>
+    </form>
+</section>
+{% endblock %}
