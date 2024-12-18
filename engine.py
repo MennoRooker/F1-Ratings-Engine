@@ -1,5 +1,6 @@
 """
-Main ratings engine for determining drivers' ratings
+Main ratings engine for determining drivers' ratings. Run this code to populate the 'ratings' table
+with points and adjusted points for each driver throughout their career. 
 """
 
 import os
