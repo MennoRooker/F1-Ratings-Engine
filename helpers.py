@@ -1,5 +1,5 @@
 """
-Helper functions for 'F1-Ratings_Engine' repository
+Helper functions for 'F1-Ratings-Engine' repository
 """
 
 import csv

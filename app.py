@@ -1,5 +1,5 @@
 """
-Flask application for F1
+Flask application for F1 ratings
 """
 
 import os
@@ -191,7 +191,6 @@ def all_time_leaderboard():
         "all-time.html",
         standings=peak_points_query
     )
-
 
 
 # ============================================ DRIVER NAMES ============================================ #
