@@ -58,12 +58,7 @@ The graphs in both 'Compare Seasons' and at the bottom of the seasonal leaderboa
 Video
 -------
 
-<iframe width="560" height="315" 
-    src="https://www.youtube.com/embed/308zRVImBsc" 
-    title="YouTube video player" frameborder="0" 
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-    allowfullscreen>
-</iframe>
+![Watch screencast](https://www.youtube.com/watch?v=308zRVImBsc&feature=youtu.be)
 
 
 Author
