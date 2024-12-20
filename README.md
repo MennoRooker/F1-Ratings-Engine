@@ -1,27 +1,20 @@
-Formula 1 Ratings Engine
-by Menno Rooker, Nov 2024
-based on Formula 1 ELO Engine by Mr. V
-
-homepage: (hyperlink here)
+Formula 1 Ratings Engine  
+by Menno Rooker, Dec 2024  
+based on Formula 1 ELO Engine by Mr. V  
 
 Contents
 --------
 1. Introduction
 2. Acknowledgements
-3. Layout
-4. Features
-5. Requirements
-6. Uncertainties
+3. Calculations
+4. Layout
+5. Video
 
 
 Introduction
 ------------
 
-In this project I will attempt to answer the question "Who is the best Formula 1 driver in the world?" by building an ELO engine that attributes ratings to drivers on the grid based on more than just the results of the races. 
-
-Formula 1 often gets accused of being a sport that rewards a driver's budget over his skill, receiving ridicule from people who have noticed that - more often than not - the driver with the better car gets the better result. It is true that since teams can create their own cars these vehicles vary greatly in performance, making most metrics to determine who the most skilled driver is hard to objectively quantify. However, by looking at how other sports (or games) determine who the best is and adjusting it accordingly we can perhaps determine who the best F1 driver is over the course of a season, or even over their whole career.
-
-The end result of this project will be a web page. Anybody interested in Formula 1 is welcome to check out the results!
+Formula 1 often gets accused of being a sport that rewards a driver's budget over his skill, receiving ridicule from people who have noticed that - more often than not - the driver with the better car gets the better result. It is true that since teams can create their own cars these vehicles can vary significantly in performance, making most metrics to determine who the most skilled driver is hard to objectively quantify. However, by looking at how other sports (or games) determine who the best is and adjusting it accordingly we can perhaps determine who the best F1 driver is over the course of a season, or even over their whole career.
 
 
 Acknowledgements
@@ -33,53 +26,44 @@ The way this project differs is in its method of calculating drivers' ratings. I
 Like Mr. V I will be using the [Formula 1 World Championship (1950 - 2024) ](https://www.kaggle.com/datasets/rohanrao/formula-1-world-championship-1950-2020?resource=download) dataset by Vopani.
 
 
+Calculations
+------------
+
+The rating system I used is loosely based on a Battle Royale rating system used in competitive games like [Apex Legends](https://help.ea.com/nl/help/apex-legends/apex-legends/apex-legends-ranked-mode/). The idea behind it is that higher rated players enter a game with negative points and they earn points by ranking higher than opponents by the end of their match. This makes sure that even when 20 teams hop into the same match that they are all competing for points in a balanced manner.  
+
+To apply this idea to Formula 1 all we have to do is apply penalties to drivers based on how their team is doing in the constructors standings. The higher ranking teams will receive a larger penalty at the start of each race and thus we get a more balanced rating system that hopefully rates a driver's individual skill more accurately.
+
+<img src="docs/Ratings Calculations Screenshot.png" alt="calculations" width="400"/>
+
+For consistency reasons the post-2010 scoring system is applied to all seasons and any points earned from the fastest lap are removed.
+
+
 Layout
---------
- 
-The web page of the results of my ELO engine will be split up into at least 2, but possibly 3 kinds of pages. The first will be a homepage with some information and a drop-down menu that takes the user to the results of a specific season. There will also be an option to look at the ALL-TIME ELO ratings of all drivers included in the data set.
+------
 
-![Homepage](sketch1.jpg)
+The homepage lead you to one of 3 different pages: seasonal leaderboards, the all-time leaderboard or season compare. Each page can be viewed by any user by simply going to the links at the top of the homepage or by selecting a season at the bottom.  
 
-After selecting a season the end ratings for that season (or current rating for the ongoing season) will be displayed on a leaderboard.
+The seasonal leaderboards display the regular points earned by the driver and the adjusted points based on this new rating system.
 
-![Leaderboard](sketch2.jpg)
+<img src="docs/Leaderboard Screenshot.png" alt="leaderboard" width="400"/>
 
-If the length of the project will allow me to I will implement the individual drivers' pages.
-Clicking on a driver (on the leaderboard) will take you to their own personal page, where you can see all their results. I hope to implement graphs of their ELO rating throughout the season(s).
+By clicking on 'Compare Seasons' you can select 2 drivers and 2 corresponding years in which they raced and see how they would have stacked up against each other had they driven in the same era.
 
-![Driver's Page](sketch3.jpg)
+<img src="docs/Compare Seasons Screenshot.png" alt="compare seasons" width="400"/>
 
- 
-Features
---------
-Below is a summation list of the features I intend to implement:
- 
-  * A comprehensive method for determining a driver's rating
-  * An interactive website with hyperlinks to leaderboards
-  * An ALL-TIME leaderboard where only the peak ratings of drivers are shown
+The graphs in both 'Compare Seasons' and at the bottom of the seasonal leaderboards can be switched from the regular points earned by the drivers during the season to the adjusted points, with penalties applied, by ticking the 'With Penalties' box above the graph.
 
-A few more features I HOPE to implement are listed below ordered from highest to lowest priority:
+<img src="docs/With Penalties tick-box.png" alt="tick" width="120"/>
 
-  * Individual drivers' pages with their results history
-  * Graphs of ratings over time
-  * Stylistic optimizations
-
-
-Requirements
+Video
 -------
 
-Like I mentioned before, I will be using the [Formula 1 World Championship (1950 - 2024) ](https://www.kaggle.com/datasets/rohanrao/formula-1-world-championship-1950-2020?resource=download) dataset by Vopani. This dataset uses the [Kaggle API](https://www.kaggle.com/docs/api#authentication).
-
-
-Uncertainties
--------
-
-Some things I imagine will be difficult include:
-
-  * Working with a new API
-  * Getting valid results out of my ELO calculations
-  * Setting up an interactive website with proper functionality
-  * Having enough time left to optimize my ELO engine in case it yields weird results
+<iframe width="560" height="315" 
+    src="https://www.youtube.com/embed/308zRVImBsc" 
+    title="YouTube video player" frameborder="0" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allowfullscreen>
+</iframe>
 
 
 Author
